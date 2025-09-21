@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:13.6-alpine
+    container_name: scraper_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-scraper_db}
+      POSTGRES_PORT: ${DATABASE_PORT:-5432}
+      POSTGRES_USER: ${DATABASE_USER:-scraper}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-scraper_password}
+      POSTGRES_SCHEMA: ${POSTGRES_SCHEMA:-public}
+    ports:
+      - "${DATABASE_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DATABASE_USER:-scraper} -d ${DATABASE_NAME:-scraper_db}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - scraper_network
+
+  scraper:
+    build:
+      context: .
+      dockerfile: apps/scraper/Dockerfile
+    container_name: scraper_app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_HOST: ${DATABASE_HOST:-postgres}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_NAME: ${DATABASE_NAME:-scraper_db}
+      DATABASE_USER: ${DATABASE_USER:-scraper}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-scraper_password}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - scraper_network
+    # Override the default command for development
+    command: ["python", "-m", "scrapy", "crawl", "quotes_spider"]
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  scraper_network:
+    driver: bridge

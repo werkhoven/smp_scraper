@@ -1,0 +1,18 @@
+[project]
+name = "db"
+version = "0.1.0"
+description = "Database library for web scraper"
+readme = "README.md"
+authors = [{ name = "Zach Werkhoven", email = "zach.werkhoven@fpsinc.com" }]
+requires-python = ">=3.9"
+dependencies = [
+    "alembic>=1.16.5",
+    "psycopg2>=2.9.10",
+    "psycopg2-binary>=2.9.10",
+    "sqlalchemy>=2.0.43",
+    "python-dotenv>=1.0.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.15,<0.9.0"]
+build-backend = "uv_build"
